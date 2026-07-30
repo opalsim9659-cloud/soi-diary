@@ -537,7 +537,7 @@ const REAL_PHOTOS = [
 
 
 /* ================= 날짜 유틸 ================= */
-const TODAY = new Date(2026,7,28);
+const TODAY = new Date(); // 현재 날짜 (2026년 7월 31일 기준 D+443일)
 const BIRTH_DATE = new Date(2025,4,15);
 const WD = ['일','월','화','수','목','금','토'];
 function dDay(d){ return Math.round((d-BIRTH_DATE)/(24*60*60*1000)); }
@@ -553,9 +553,10 @@ function photoCard(seed, opts={}){
     const src = opts.src || REAL_PHOTOS[Math.abs(seed) % REAL_PHOTOS.length];
     const shape = opts.big ? "aspect-[4/3]" : "aspect-square";
     const video = opts.video ? `<span class="absolute inset-0 flex items-center justify-center"><span class="w-7 h-7 rounded-full bg-black/35 flex items-center justify-center text-white text-xs">▶</span></span>` : "";
-    return `<div class="relative ${shape} overflow-hidden" style="border-radius:10px;">
-        <img src="${src}" class="w-full h-full object-cover" loading="lazy"/>
+    return `<div class="relative ${shape} overflow-hidden cursor-pointer group" style="border-radius:10px;" onclick="openPhotoDetail('${src}', -1)">
+        <img src="${src}" class="w-full h-full object-cover group-hover:opacity-80 transition-opacity" loading="lazy"/>
         ${video}
+        <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200"></div>
     </div>`;
 }
 function uploadedPhotoCard(idx){
@@ -564,10 +565,11 @@ function uploadedPhotoCard(idx){
     const badge = tagCount > 0
         ? `<span class="absolute bottom-1 right-1 bg-[#5FA88F] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">🏷️ ${tagCount}</span>`
         : `<span class="absolute bottom-1 right-1 bg-black/50 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">🏷️ 태그하기</span>`;
-    return `<button onclick="openTagPhotoModal(${idx})" class="relative aspect-square overflow-hidden block w-full" style="border-radius:10px;">
-        <img src="${p.src}" class="w-full h-full object-cover" loading="lazy"/>
+    return `<div class="relative aspect-square overflow-hidden block w-full group cursor-pointer" style="border-radius:10px;" onclick="openPhotoDetail('${p.src}', ${idx})">
+        <img src="${p.src}" class="w-full h-full object-cover group-hover:opacity-80 transition-opacity" loading="lazy"/>
         ${badge}
-    </button>`;
+        <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200"></div>
+    </div>`;
 }
 function photoUrl(seed){ return REAL_PHOTOS[Math.abs(seed) % REAL_PHOTOS.length]; }
 
@@ -2067,8 +2069,9 @@ renderGrowthTimeline();
       if (gate) gate.style.display = 'none';
     }
   }
-    // 사진 클릭 시 상세보기 및 삭제 모달을 띄우는 함수
-function openPhotoDetail(photoUrl, docId) {
+
+/* ================= 사진 상세 보기 모달 (모든 페이지) ================= */
+function openPhotoDetail(photoUrl, idx) {
   // 기존에 열려있는 모달이 있다면 제거
   const existingModal = document.getElementById('photoDetailModal');
   if (existingModal) existingModal.remove();
@@ -2077,28 +2080,51 @@ function openPhotoDetail(photoUrl, docId) {
   const modal = document.createElement('div');
   modal.id = 'photoDetailModal';
   modal.className = 'fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4';
+  
+  // idx가 -1이면 데모 사진 (태그/삭제 불가), 그 외는 업로드된 사진
+  const isUploadedPhoto = idx >= 0;
+  const buttonsHtml = isUploadedPhoto ? `
+    <button onclick="openTagPhotoModal(${idx})" class="w-full bg-[#FF8A7A] text-white font-bold py-3 rounded-xl hover:bg-[#E87967] transition shadow-md">
+      📸 태그 수정하기
+    </button>
+    <button onclick="deleteUploadedPhoto(${idx})" class="w-full bg-[#D9534F] text-white font-bold py-3 rounded-xl hover:bg-[#C9423E] transition shadow-md">
+      🗑️ 이 사진 삭제
+    </button>
+  ` : `<p class="text-xs text-[#C9BFB2] font-bold text-center py-2">😊 샘플 사진입니다</p>`;
+  
   modal.innerHTML = `
-    <div class="bg-white rounded-2xl max-w-sm w-full p-4 relative flex flex-col items-center shadow-2xl">
-      <button onclick="document.getElementById('photoDetailModal').remove()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-xl font-bold px-2">✕</button>
-      <img src="${photoUrl}" class="w-full max-h-[60vh] object-contain rounded-xl mb-4" />
-      <button onclick="deletePhotoData('${docId}')" class="w-full bg-red-500 text-white font-bold py-3 rounded-xl hover:bg-red-600 transition shadow-md">
-        이 사진 삭제하기 🗑️
-      </button>
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 relative flex flex-col items-center shadow-2xl">
+      <button onclick="closePhotoDetail()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl font-bold z-10">✕</button>
+      <img src="${photoUrl}" class="w-full max-h-[50vh] object-contain rounded-xl mb-6" />
+      <div class="w-full space-y-3">
+        ${buttonsHtml}
+      </div>
     </div>
   `;
   document.body.appendChild(modal);
+  
+  // 배경 클릭 시 닫기
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) closePhotoDetail();
+  });
 }
 
-// 파이어베이스에서 사진 데이터 삭제하는 함수
-async function deletePhotoData(docId) {
+function closePhotoDetail() {
+  const modal = document.getElementById('photoDetailModal');
+  if (modal) modal.remove();
+}
+
+/* ================= 업로드된 사진 삭제 ================= */
+function deleteUploadedPhoto(idx) {
   if (!confirm('정말 이 사진을 삭제하시겠습니까?')) return;
   try {
-    // Firestore 문서 삭제 (컬렉션 이름이 'posts' 또는 'photos'일 수 있습니다. 본인 프로젝트에 맞게 수정)
-    await firebase.firestore().collection('posts').doc(docId).delete();
-    alert('삭제되었습니다!');
-    const modal = document.getElementById('photoDetailModal');
-    if (modal) modal.remove();
-    location.reload(); // 새로고침하여 앨범 갱신
+    UPLOADED_PHOTOS.splice(idx, 1);
+    alert('사진이 삭제되었습니다.');
+    closePhotoDetail();
+    // 모든 탭 재렌더링 (가족 탭에서도 업로드된 사진이 보일 수 있으니)
+    renderAlbumTab();
+    renderHome();
+    renderFamily();
   } catch (error) {
     console.error("삭제 실패:", error);
     alert('삭제에 실패했습니다.');
