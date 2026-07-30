@@ -1360,7 +1360,6 @@ function handleUploadPhotoSelect(event) {
         img.src = e.target.result;
     };
     reader.readAsDataURL(file);
-}
     const dateVal = document.getElementById('uploadDateInput').value;
     const uploadDate = dateVal ? new Date(dateVal + 'T00:00:00') : new Date(TODAY);
 
@@ -2061,6 +2060,16 @@ renderGrowthTimeline();
   // 파이어베이스 창고 문 열기
   firebase.initializeApp(firebaseConfig);
   const storage = firebase.storage();
+    function closeWelcomeNotice() {
+  const notice = document.getElementById('welcomeNotice'); // 혹은 해당 환영 공지 박스의 id
+  if (notice) {
+    notice.style.display = 'none';
+  } else {
+    const gate = document.querySelector('.onboarding-gate');
+    if (gate) gate.style.display = 'none';
+  }
+}
+
 </script>
 
 </body>
