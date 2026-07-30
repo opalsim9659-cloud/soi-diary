@@ -2033,6 +2033,9 @@ renderHome();
 renderFamily();
 renderMy();
 renderGrowthTimeline();
+</script> <!-- 위쪽 스크립트 태그를 여기서 안전하게 닫아줍니다 -->
+
+<!-- 구글 파이어베이스 창고 연결 라이브러리 -->
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -2053,22 +2056,17 @@ renderGrowthTimeline();
     firebase.initializeApp(firebaseConfig);
   }
   const storage = firebase.storage();
-</script>
 
-  
-  // 파이어베이스 창고 문 열기
-  firebase.initializeApp(firebaseConfig);
-  const storage = firebase.storage();
-    function closeWelcomeNotice() {
-  const notice = document.getElementById('welcomeNotice'); // 혹은 해당 환영 공지 박스의 id
-  if (notice) {
-    notice.style.display = 'none';
-  } else {
-    const gate = document.querySelector('.onboarding-gate');
-    if (gate) gate.style.display = 'none';
+  // 환영 공지 닫기 함수
+  function closeWelcomeNotice() {
+    const notice = document.getElementById('welcomeNotice');
+    if (notice) {
+      notice.style.display = 'none';
+    } else {
+      const gate = document.querySelector('.onboarding-gate');
+      if (gate) gate.style.display = 'none';
+    }
   }
-}
-
 </script>
 
 </body>
