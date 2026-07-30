@@ -2067,6 +2067,44 @@ renderGrowthTimeline();
       if (gate) gate.style.display = 'none';
     }
   }
+    // 사진 클릭 시 상세보기 및 삭제 모달을 띄우는 함수
+function openPhotoDetail(photoUrl, docId) {
+  // 기존에 열려있는 모달이 있다면 제거
+  const existingModal = document.getElementById('photoDetailModal');
+  if (existingModal) existingModal.remove();
+
+  // 모달 HTML 생성
+  const modal = document.createElement('div');
+  modal.id = 'photoDetailModal';
+  modal.className = 'fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4';
+  modal.innerHTML = `
+    <div class="bg-white rounded-2xl max-w-sm w-full p-4 relative flex flex-col items-center shadow-2xl">
+      <button onclick="document.getElementById('photoDetailModal').remove()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-xl font-bold px-2">✕</button>
+      <img src="${photoUrl}" class="w-full max-h-[60vh] object-contain rounded-xl mb-4" />
+      <button onclick="deletePhotoData('${docId}')" class="w-full bg-red-500 text-white font-bold py-3 rounded-xl hover:bg-red-600 transition shadow-md">
+        이 사진 삭제하기 🗑️
+      </button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+// 파이어베이스에서 사진 데이터 삭제하는 함수
+async function deletePhotoData(docId) {
+  if (!confirm('정말 이 사진을 삭제하시겠습니까?')) return;
+  try {
+    // Firestore 문서 삭제 (컬렉션 이름이 'posts' 또는 'photos'일 수 있습니다. 본인 프로젝트에 맞게 수정)
+    await firebase.firestore().collection('posts').doc(docId).delete();
+    alert('삭제되었습니다!');
+    const modal = document.getElementById('photoDetailModal');
+    if (modal) modal.remove();
+    location.reload(); // 새로고침하여 앨범 갱신
+  } catch (error) {
+    console.error("삭제 실패:", error);
+    alert('삭제에 실패했습니다.');
+  }
+}
+
 </script>
 
 </body>
