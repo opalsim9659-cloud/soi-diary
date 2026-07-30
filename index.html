@@ -1361,8 +1361,6 @@ function handleUploadPhotoSelect(event) {
     };
     reader.readAsDataURL(file);
 }
-    }
-
     const dateVal = document.getElementById('uploadDateInput').value;
     const uploadDate = dateVal ? new Date(dateVal + 'T00:00:00') : new Date(TODAY);
 
