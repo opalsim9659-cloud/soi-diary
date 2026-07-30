@@ -1298,13 +1298,69 @@ function showUploadProcessing(done, total){
     preview.innerHTML = `<span class="text-4xl">⏳</span><span class="text-xs text-[#9B8A7C] font-bold">사진 처리 중... (${done}/${total})</span>`;
 }
 
-function handleUploadPhotoSelect(evt){
-    const files = Array.from(evt.target.files || []);
-    if(files.length === 0) return;
-    if(files.length > 15){
-        showToast('한 번에 15장까지만 올릴 수 있어요. 나눠서 여러 번 올려주세요!', innerWidth/2, innerHeight/2, '#FF8A7A');
-        evt.target.value = '';
+// 1. 사진 선택 시 '자동 압축' 후 미리보기를 띄우고 임시 저장하는 함수
+function handleUploadPhotoSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // 파일이 이미지인지 한 번 더 안전하게 확인
+    if (!file.type.match('image.*')) {
+        showToast('이미지 파일만 업로드 가능합니다.', window.innerWidth/2, window.innerHeight/2, '#D9534F');
         return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        // 이미지를 메모리에 로드
+        const img = new Image();
+        img.onload = function() {
+            // --- [핵심] 이미지 압축을 위한 캔버스(Canvas) 작업 시작 ---
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            // 최대 해상도 설정 (예: 가로 또는 세로 최대 1080px로 제한)
+            const MAX_WIDTH = 1080;
+            const MAX_HEIGHT = 1080;
+            let width = img.width;
+            let height = img.height;
+
+            // 원본 비율을 유지하면서 크기 계산
+            if (width > height) {
+                if (width > MAX_WIDTH) {
+                    height *= MAX_WIDTH / width;
+                    width = MAX_WIDTH;
+                }
+            } else {
+                if (height > MAX_HEIGHT) {
+                    width *= MAX_HEIGHT / height;
+                    height = MAX_HEIGHT;
+                }
+            }
+
+            // 계산된 크기로 캔버스 크기 지정 및 이미지 그리기
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // 캔버스에 그려진 이미지를 JPEG 포맷, 품질 0.7(70%)로 압축하여 추출
+            // 이 과정을 거치면 수 MB의 사진이 100~300KB 내외로 대폭 줄어듭니다.
+            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+            // --------------------------------------------------------
+
+            // 압축된 이미지를 state에 임시 저장 (파이어베이스 연동 시 이 데이터를 업로드하면 됨)
+            state.tempPhoto = compressedDataUrl; 
+            
+            // 태그 모달의 미리보기 영역에 압축된 이미지 렌더링
+            document.getElementById('tagPhotoPreview').innerHTML = `<img src="${compressedDataUrl}" class="w-full h-full object-cover rounded-xl"/>`;
+            
+            // 업로드 모달을 닫고 태그 작성 모달 열기
+            closeOverlay('overlay-upload');
+            openOverlay('overlay-tagphoto');
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
     }
 
     const dateVal = document.getElementById('uploadDateInput').value;
