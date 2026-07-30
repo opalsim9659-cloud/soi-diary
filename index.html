@@ -2036,6 +2036,26 @@ renderHome();
 renderFamily();
 renderMy();
 renderGrowthTimeline();
+    <!-- 구글 파이어베이스 창고 연결 라이브러리 -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+
+<!-- 소이 다이어리 비밀 열쇠 -->
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyD0RUOS6jXOMkQ6WqVfkS9_6fgi0YjXbco",
+    authDomain: "soi-diary.firebaseapp.com",
+    projectId: "soi-diary",
+    storageBucket: "soi-diary.firebasestorage.app",
+    messagingSenderId: "1039495628882",
+    appId: "1:1039495628882:web:1fa0925a5f916fa643378b"
+  };
+  
+  // 파이어베이스 창고 문 열기
+  firebase.initializeApp(firebaseConfig);
+  const storage = firebase.storage();
+</script>
+
 </script>
 </body>
 </html>
